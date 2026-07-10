@@ -1,0 +1,5 @@
+# Keep repo/CI-only files out of the zip produced by `git archive`
+# (used by the release workflow to build the installable extension package)
+.github export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore

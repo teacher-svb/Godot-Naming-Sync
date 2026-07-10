@@ -1,0 +1,25 @@
+schema_version = "1.0.0"
+
+id = "godot_naming_sync"
+version = "1.0.0"
+name = "Godot Naming Sync"
+tagline = "Keep object names in sync with stable Godot IDs and collision suffixes"
+maintainer = "Syndias"
+type = "add-on"
+
+# Supported Blender versions
+blender_version_min = "4.2.0"
+
+# One of: "GPL-2.0-or-later", "GPL-3.0-or-later", "MIT", etc.
+# Change this if you want a different license.
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+# Optional: tags shown on the extensions platform, see
+# https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
+tags = ["Object"]
+
+# No external Python dependencies, no special permissions needed.
+# Uncomment and fill in if you publish this to the extensions.blender.org platform.
+# website = "https://example.com"

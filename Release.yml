@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read extension id and version from manifest
+        id: meta
+        run: |
+          python3 -c "
+          import tomllib
+          with open('blender_manifest.toml', 'rb') as f:
+              data = tomllib.load(f)
+          print('id=' + data['id'])
+          print('version=' + data['version'])
+          " >> "$GITHUB_OUTPUT"
+
+      - name: Build extension zip
+        run: |
+          mkdir -p dist
+          git archive --format=zip \
+            -o "dist/${{ steps.meta.outputs.id }}-${{ steps.meta.outputs.version }}.zip" \
+            HEAD
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.meta.outputs.version }}
+          name: v${{ steps.meta.outputs.version }}
+          files: dist/*.zip
+          generate_release_notes: true

@@ -147,7 +147,59 @@ SUFFIX_OPS = (
     OBJECT_OT_godot_clear_suffix,
 )
 
-CLASSES = (OBJECT_OT_godot_sync_all,) + SUFFIX_OPS
+
+class OBJECT_OT_godot_make_colonly_collider(bpy.types.Operator):
+    bl_idname = "object.godot_make_colonly_collider"
+    bl_label = "Add Collision Copy (-colonly)"
+    bl_description = (
+        "Duplicate each selected object as a child, strip all materials "
+        "from the copy, and tag it as a hidden trimesh collider (-colonly)"
+    )
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return any(obj.type == 'MESH' for obj in context.selected_objects)
+
+    def execute(self, context):
+        sync_all_objects(context)
+
+        created = []
+        for obj in list(context.selected_objects):
+            if obj.type != 'MESH':
+                continue
+
+            copy = obj.copy()
+            copy.data = obj.data.copy()
+            copy.data.materials.clear()
+
+            for collection in obj.users_collection:
+                collection.objects.link(copy)
+
+            copy.parent = obj
+            copy.matrix_parent_inverse = obj.matrix_world.inverted()
+
+            copy[GODOT_BASE_KEY] = obj[GODOT_BASE_KEY]
+            copy[GODOT_SUFFIX_KEY] = "-colonly"
+            if GODOT_UID_KEY in copy:
+                del copy[GODOT_UID_KEY]
+
+            created.append(copy)
+
+        sync_all_objects(context)
+
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        for obj in created:
+            obj.select_set(True)
+        if created:
+            context.view_layer.objects.active = created[-1]
+
+        self.report({'INFO'}, f"Created {len(created)} collision object(s)")
+        return {'FINISHED'}
+
+
+CLASSES = (OBJECT_OT_godot_sync_all,) + SUFFIX_OPS + (OBJECT_OT_godot_make_colonly_collider,)
 
 
 # --- UI: N-panel tab in the 3D viewport -----------------------------------
@@ -171,6 +223,11 @@ class VIEW3D_PT_godot_naming(bpy.types.Panel):
         col = layout.column(align=True)
         for cls in SUFFIX_OPS:
             col.operator(cls.bl_idname)
+
+        layout.separator()
+        layout.label(text="Copy mesh as collision object:")
+        col = layout.column(align=True)
+        col.operator(OBJECT_OT_godot_make_colonly_collider.bl_idname, icon='DUPLICATE')
 
         layout.separator()
         box = layout.box()
